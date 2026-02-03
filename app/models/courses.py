@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from sqlalchemy.orm import relationship
 from sqlalchemy import (
     text,
     UUID,
@@ -26,8 +27,11 @@ class Course(Base):
     code = Column(VARCHAR(20), nullable=False)
     capacity = Column(Integer, nullable=False)
     duration = Column(Integer, nullable=False)
+    # when a user is deleted, the course is assigned to another instructor
     instructor = Column(
-        UUID, ForeignKey("users.id", name="courses_instructor_fk"), nullable=False
+        UUID,
+        ForeignKey("users.id", name="courses_instructor_fk", ondelete="RESTRICT"),
+        nullable=False,
     )
     total_students = Column(
         Integer, nullable=False
@@ -45,3 +49,8 @@ class Course(Base):
         PrimaryKeyConstraint("id", name="courses_id_pk"),
         UniqueConstraint("code", name="courses_code_unique_key"),
     )
+
+    users = relationship(
+        "User", back_populates="courses", secondary="Enrollment", viewonly=True
+    )
+    enrollments = relationship("Enrollment", back_populates="course", viewonly=True)

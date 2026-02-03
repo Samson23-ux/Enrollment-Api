@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from sqlalchemy.orm import relationship
 from sqlalchemy import (
     Enum,
     text,
@@ -27,7 +28,9 @@ class User(Base):
     email = Column(VARCHAR(20), nullable=False)
     hashed_password = Column(Text, nullable=False)
     role_id = Column(
-        UUID, ForeignKey("roles.id", name="users_role_id_fk"), nullable=False
+        UUID,
+        ForeignKey("roles.id", name="users_role_id_fk", ondelete="RESTRICT"),
+        nullable=False,
     )
     is_active = Column(Boolean, default=True, nullable=False)
     is_suspended = Column(Boolean, default=False, nullable=False)
@@ -49,6 +52,12 @@ class User(Base):
         PrimaryKeyConstraint("id", name="users_id_pk"),
         UniqueConstraint("email", name="users_email_unique_key"),
     )
+
+    role = relationship("Role", viewonly=True)
+    courses = relationship(
+        "Course", back_populates="users", secondary="Enrollment", passive_deletes=True
+    )
+    enrollments = relationship("Enrollment", back_populates="user", viewonly=True)
 
 
 class Role(Base):
