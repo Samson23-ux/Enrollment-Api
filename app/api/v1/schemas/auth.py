@@ -1,5 +1,6 @@
 import enum
-from pydantic import BaseModel, EmailStr
+from uuid import UUID
+from pydantic import BaseModel
 
 
 class TokenStatus(str, enum.Enum):
@@ -9,7 +10,7 @@ class TokenStatus(str, enum.Enum):
 
 
 class TokenDataV1(BaseModel):
-    email: EmailStr
+    id: UUID
 
 
 class TokenV1(BaseModel):

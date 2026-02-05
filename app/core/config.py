@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
+    API_PREFIX: str = "/api/v1"
     API_VERSION: str = "v1.0"
     API_NAME: str = "Enrollment API"
     API_DESCRIPTION: str = "A simple API for a course enrollment platform"

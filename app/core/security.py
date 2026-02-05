@@ -44,7 +44,7 @@ async def create_access_token(
         )
 
     payload: dict = {
-        "sub": token_data.email,
+        "sub": token_data.id,
         "exp": expire_time,
         "iat": datetime.now(timezone.utc),
     }
@@ -71,7 +71,7 @@ async def create_refresh_token(
         )
 
     payload: dict = {
-        "sub": token_data.email,
+        "sub": token_data.id,
         "exp": expire_time,
         "iat": datetime.now(timezone.utc),
         "jti": uuid4(),
