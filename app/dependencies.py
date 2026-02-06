@@ -22,8 +22,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/sign-in/")
 
 
 async def get_db():
-    async with async_db_session as session:
-        yield session()
+    try:
+        session: AsyncSession = async_db_session()
+        yield session
+    finally:
+        await session.close()
 
 
 async def get_current_user(
@@ -46,10 +49,11 @@ async def get_current_user(
 
     return user
 
-
-async def required_roles(roles: list[UserRole]):
+def required_roles(roles: list[UserRole]):
     async def role_checker(curr_user: User = Depends(get_current_user)):
         if curr_user.role.name not in roles:
             sentry_logger.error("User {id} is not authorized", id=curr_user.id)
             raise AuthorizationError()
         return curr_user
+
+    return role_checker

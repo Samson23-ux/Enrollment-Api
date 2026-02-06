@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     ASYNC_DB_URL: str
     API_DB_PASSWORD: str
 
+    # Test DB
+    ASYNC_TEST_DB_URL: str
+
     # Argon2
     ARGON2_PEPPER: str
 

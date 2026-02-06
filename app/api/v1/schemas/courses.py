@@ -41,5 +41,5 @@ class CourseUpdateV1(BaseModel):
     duration: Optional[int] = None
 
 
-class CourseResponseV1(BaseModel):
+class CourseResponseV1(ResponseBase):
     data: CourseReadV1 | list[CourseReadV1]

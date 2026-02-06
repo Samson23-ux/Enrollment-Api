@@ -57,5 +57,5 @@ class UserReadV1(UserBaseV1):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserResponseV1(BaseModel):
+class UserResponseV1(ResponseBase):
     data: UserReadV1 | list[UserReadV1]
