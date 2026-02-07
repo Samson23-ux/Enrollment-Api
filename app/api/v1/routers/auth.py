@@ -6,9 +6,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 
 from app.models.users import User
+from app.core.config import settings
 from app.api.v1.schemas.auth import TokenV1
 from app.dependencies import get_db, get_current_user
-from app.api.v1.schemas.users import UserResponseV1, UserCreateV1
+from app.api.v1.services.auth_service import auth_service_v1
+from app.api.v1.schemas.users import UserResponseV1, UserCreateV1, UserReadV1
 
 
 auth_router_v1 = APIRouter()
@@ -21,20 +23,31 @@ auth_router_v1 = APIRouter()
     description="Create user account",
 )
 async def sign_up(user_create: UserCreateV1, db: AsyncSession = Depends(get_db)):
-    pass
+    user: UserReadV1 = await auth_service_v1.sign_up(user_create, db)
+    return UserResponseV1(message="User created successfully", data=user)
 
 
 @auth_router_v1.post(
     "/auth/sign-in/",
     status_code=201,
     response_model=TokenV1,
-    description="Sign in with user credentials. Username field represent usere email",
+    description="Sign in with user credentials. Username field represent user email",
 )
 async def sign_in(
+    response: Response,
     sign_in_form: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
+    access_token, refresh_token = await auth_service_v1.sign_in(
+        sign_in_form.username, sign_in_form.password, db
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        secure=settings.ENVIRONMENT.lower() == "production",
+        samesite="lax",
+    )
+    return TokenV1(access_token=access_token)
 
 
 @auth_router_v1.get(
@@ -43,8 +56,20 @@ async def sign_in(
     response_model=TokenV1,
     description="Get a new access token with a valid refresh token",
 )
-async def get_access_token(request: Request, db: AsyncSession = Depends(get_db)):
-    pass
+async def get_access_token(
+    request: Request, response: Response, db: AsyncSession = Depends(get_db)
+):
+    refresh_token: str = request.cookies.get("refresh_token")
+    access_token, refresh_token = await auth_service_v1.create_new_token(
+        refresh_token, db
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        secure=settings.ENVIRONMENT.lower() == "production",
+        samesite="lax",
+    )
+    return TokenV1(access_token=access_token)
 
 
 @auth_router_v1.patch(
@@ -60,7 +85,11 @@ async def update_password(
     curr_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
+    refresh_token: str = request.cookies.get("refresh_token")
+    curr_user: UserReadV1 = await auth_service_v1.update_password(
+        refresh_token, curr_password, new_password, curr_user, db
+    )
+    return UserResponseV1(message="User password updated successfully", data=curr_user)
 
 
 @auth_router_v1.patch(
@@ -74,7 +103,8 @@ async def reset_password(
     new_password: str = Form(..., description="Current password"),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
+    user: UserReadV1 = await auth_service_v1.reset_password(email, new_password, db)
+    return UserResponseV1(message="User password reset successfully", data=user)
 
 
 @auth_router_v1.patch(
@@ -88,7 +118,8 @@ async def reactivate_account(
     password: str = Form(..., description="Current password"),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
+    user: UserReadV1 = await auth_service_v1.reactivate_account(email, password, db)
+    return UserResponseV1(message="User account reactivated successfully", data=user)
 
 
 @auth_router_v1.delete(
@@ -98,12 +129,12 @@ async def reactivate_account(
 )
 async def deactivate_account(
     request: Request,
-    email: str = Form(..., description="User email"),
     password: str = Form(..., description="Current password"),
     curr_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
+    refresh_token: str = request.cookies.get("refresh_token")
+    await auth_service_v1.deactivate_account(curr_user, password, refresh_token, db)
 
 
 @auth_router_v1.delete(
@@ -113,9 +144,9 @@ async def deactivate_account(
 )
 async def delete_account(
     request: Request,
-    email: str = Form(..., description="User email"),
     password: str = Form(..., description="Current password"),
     curr_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
+    refresh_token: str = request.cookies.get("refresh_token")
+    await auth_service_v1.delete_account(curr_user, password, refresh_token, db)

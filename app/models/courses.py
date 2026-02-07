@@ -10,6 +10,7 @@ from sqlalchemy import (
     Integer,
     DateTime,
     ForeignKey,
+    CheckConstraint,
     UniqueConstraint,
     PrimaryKeyConstraint,
 )
@@ -25,10 +26,14 @@ class Course(Base):
     title = Column(VARCHAR(20), nullable=False)
     description = Column(VARCHAR(50), nullable=False)
     code = Column(VARCHAR(20), nullable=False)
-    capacity = Column(Integer, nullable=False)
+    capacity = Column(
+        Integer,
+        CheckConstraint("capacity >= 10", name="courses_capacity_ck"),
+        nullable=False,
+    )
     duration = Column(Integer, nullable=False)
     # when a user is deleted, the course is assigned to another instructor
-    instructor = Column(
+    instructor_id = Column(
         UUID,
         ForeignKey("users.id", name="courses_instructor_fk", ondelete="RESTRICT"),
         nullable=False,
@@ -50,7 +55,11 @@ class Course(Base):
         UniqueConstraint("code", name="courses_code_unique_key"),
     )
 
+    instructor = relationship(
+        "User", foreign_keys="Course.instructor_id", viewonly=True
+    )
+
     users = relationship(
-        "User", back_populates="courses", secondary="Enrollment", viewonly=True
+        "User", back_populates="courses", secondary="enrollments", viewonly=True
     )
     enrollments = relationship("Enrollment", back_populates="course", viewonly=True)

@@ -9,6 +9,12 @@ class AppException(Exception):
     """Base class for app exception"""
 
 
+class ServerError(AppException):
+    """Internal server error"""
+
+    pass
+
+
 class AuthenticationError(AppException):
     """User not authenticated"""
 
@@ -21,8 +27,26 @@ class AuthorizationError(AppException):
     pass
 
 
+class UserExistsError(AppException):
+    """User already exists"""
+
+    pass
+
+
 class UserNotFoundError(AppException):
     """User not found"""
+
+    pass
+
+
+class CoursesNotFoundError(AppException):
+    """Courses not found"""
+
+    pass
+
+
+class CredentialError(AppException):
+    """Wrong credentials provided"""
 
     pass
 

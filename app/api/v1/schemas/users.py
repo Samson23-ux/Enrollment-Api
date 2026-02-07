@@ -48,13 +48,16 @@ class UserUpdateV1(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
-class UserReadV1(UserBaseV1):
+class UserReadBaseV1(UserBaseV1):
     id: UUID
-    role: UserRole
     is_active: bool
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserReadV1(UserReadBaseV1):
+    role: UserRole
 
 
 class UserResponseV1(ResponseBase):

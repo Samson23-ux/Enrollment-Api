@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
+    # current environment
+    ENVIRONMENT: str
 
     API_PREFIX: str = "/api/v1"
     API_VERSION: str = "v1.0"

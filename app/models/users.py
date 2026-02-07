@@ -54,7 +54,7 @@ class User(Base):
 
     role = relationship("Role", viewonly=True)
     courses = relationship(
-        "Course", back_populates="users", secondary="Enrollment", passive_deletes=True
+        "Course", back_populates="users", secondary="enrollments", passive_deletes=True
     )
     enrollments = relationship("Enrollment", back_populates="user", viewonly=True)
 

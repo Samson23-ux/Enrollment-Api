@@ -50,6 +50,6 @@ async def request_middleware(request: Request, call_next):
     return response
 
 
-@app.get("/api/v1/health", status_code=200, description="Check api health")
+@app.get("/api/v1/health/", status_code=200, description="Check api health")
 async def health_check():
-    return {"Message": "OK"}
+    return {"message": "OK"}

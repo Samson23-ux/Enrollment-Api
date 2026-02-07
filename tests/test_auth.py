@@ -99,7 +99,7 @@ async def test_deactivate_account(test_client, create_student):
     res = test_client.request(
         "DELETE",
         "/api/v1/auth/deactivate/",
-        data={"email": email, "password": password},
+        data={"password": password},
         headers={"Authorization": access_token},
     )
 
@@ -107,14 +107,39 @@ async def test_deactivate_account(test_client, create_student):
 
 
 @pytest.mark.asyncio
-async def test_unauthenticated_auth(test_client, create_student):
+async def test_reactivate_account(test_client, create_student):
     email: str = fake_student.get("email")
+    password: str = fake_student.get("password")
+
+    sign_in_res = test_client.post(
+        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+    )
+
+    access_token: str = sign_in_res.json()["access_token"]
+
+    test_client.request(
+        "DELETE",
+        "/api/v1/auth/deactivate/",
+        data={"email": email, "password": password},
+        headers={"Authorization": access_token},
+    )
+
+    res = test_client.patch(
+        "/api/v1/auth/reactivate/",
+        data={"email": email, "password": password},
+    )
+
+    assert res.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_unauthenticated_auth(test_client, create_student):
     password: str = fake_student.get("password")
 
     res = test_client.request(
         "DELETE",
         "/api/v1/auth/deactivate/",
-        data={"email": email, "password": password},
+        data={"password": password},
     )
 
     assert res.status_code == 401
@@ -125,8 +150,17 @@ async def test_delete_account(test_client, create_student):
     email: str = fake_student.get("email")
     password: str = fake_student.get("password")
 
+    sign_in_res = test_client.post(
+        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+    )
+
+    access_token: str = sign_in_res.json()["access_token"]
+
     res = test_client.request(
-        "DELETE", "/auth/delete-account/", data={"email": email, "password": password}
+        "DELETE",
+        "/api/v1/auth/delete-account/",
+        data={"password": password},
+        headers={"Authorization": access_token},
     )
 
     assert res.status_code == 204
