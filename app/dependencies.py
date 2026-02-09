@@ -13,7 +13,6 @@ from app.database.session import async_db_session
 from app.api.v1.services.user_service import user_service_v1
 from app.core.exceptions import (
     AuthenticationError,
-    UserNotFoundError,
     AuthorizationError,
 )
 
@@ -43,11 +42,8 @@ async def get_current_user(
 
     user: User = await user_service_v1.get_user_by_id(user_id, db)
 
-    if not user:
-        sentry_logger.error("User {id} not found in database", id=user_id)
-        raise UserNotFoundError()
-
     return user
+
 
 def required_roles(roles: list[UserRole]):
     async def role_checker(curr_user: User = Depends(get_current_user)):

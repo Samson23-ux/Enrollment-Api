@@ -43,12 +43,10 @@ async def create_access_token(
             minutes=settings.ACCESS_TOKEN_EXPIRE_TIME
         )
     else:
-        expire_time: datetime = expire_time + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_TIME
-        )
+        expire_time: datetime = expire_time + datetime.now(timezone.utc)
 
     payload: dict = {
-        "sub": token_data.id,
+        "sub": str(token_data.id),
         "exp": expire_time,
         "iat": datetime.now(timezone.utc),
     }
@@ -64,21 +62,19 @@ async def create_access_token(
 
 async def create_refresh_token(
     token_data: TokenDataV1, expire_time: Optional[datetime] = None
-) -> dict:
+) -> tuple:
     if not expire_time:
         expire_time: datetime = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.REFRESH_TOKEN_EXPIRE_TIME
+            days=settings.REFRESH_TOKEN_EXPIRE_TIME
         )
     else:
-        expire_time: datetime = expire_time + timedelta(
-            minutes=settings.REFRESH_TOKEN_EXPIRE_TIME
-        )
+        expire_time: datetime = expire_time + datetime.now(timezone.utc)
 
     payload: dict = {
-        "sub": token_data.id,
+        "sub": str(token_data.id),
         "exp": expire_time,
         "iat": datetime.now(timezone.utc),
-        "jti": uuid4(),
+        "jti": str(uuid4()),
     }
 
     token: str = jwt.encode(
@@ -87,13 +83,7 @@ async def create_refresh_token(
         algorithm=settings.JWT_ALGORITHM,
     )
 
-    data: dict = {
-        "refresh_token": token,
-        "token_id": payload["jti"],
-        "expire_time": payload["exp"],
-    }
-
-    return data
+    return token, payload["jti"], expire_time
 
 
 async def decode_token(token: str, key: str):
@@ -111,17 +101,13 @@ async def decode_token(token: str, key: str):
 async def prepare_tokens(user_id: UUID, token_data: TokenDataV1) -> dict:
     access_token: str = await create_access_token(token_data)
 
-    refresh_token_data: dict = await create_refresh_token(token_data)
-
-    token_id: UUID = refresh_token_data.get("token_id")
-    refresh_token: str = refresh_token_data.get("refresh_token")
-    expire_time: datetime = refresh_token_data.get("expire_time")
+    refresh_token, token_id, token_exp = await create_refresh_token(token_data)
 
     refresh_token_db: RefreshToken = RefreshToken(
         id=token_id,
         token=await hash_token(refresh_token),
         user_id=user_id,
-        expires_at=expire_time,
+        expires_at=token_exp,
     )
 
     data: dict = {

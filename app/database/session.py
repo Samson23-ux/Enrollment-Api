@@ -13,7 +13,7 @@ from app.core.config import settings
 # a connection pool is used to ensure connections are made available
 async_engine: AsyncEngine = create_async_engine(
     url=settings.ASYNC_DB_URL,
-    connect_args={"options": "-c timezone=utc"},
+    connect_args={"server_settings": {"timezone": "utc"}},
     pool_size=10,
     pool_timeout=10.0,
     pool_pre_ping=True,

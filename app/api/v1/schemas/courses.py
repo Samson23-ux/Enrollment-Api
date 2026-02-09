@@ -8,8 +8,7 @@ class CourseBaseV1(BaseModel):
     title: str = Field(min_length=5)
     description: str = Field(min_length=10, max_length=50)
     code: str = Field(min_length=3)
-    instructor: str = Field(min_length=8)
-    capacity: int = Field(min_length=10)
+    capacity: int = Field(ge=10)
     duration: int
 
 
@@ -18,18 +17,22 @@ class ResponseBase(BaseModel):
 
 
 class CourseCreateV1(CourseBaseV1):
-    pass
+    instructor: str = Field(min_length=8)
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
-class CourseReadV1(CourseBaseV1):
+class CourseReadBaseV1(CourseBaseV1):
     id: UUID
     is_active: bool
     total_students: int
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CourseReadV1(CourseReadBaseV1):
+    instructor: str
 
 
 class CourseUpdateV1(BaseModel):
@@ -42,4 +45,4 @@ class CourseUpdateV1(BaseModel):
 
 
 class CourseResponseV1(ResponseBase):
-    data: CourseReadV1 | list[CourseReadV1]
+    data: Optional[CourseReadV1 | list[CourseReadV1]] = None

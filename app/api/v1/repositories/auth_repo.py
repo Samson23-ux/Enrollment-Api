@@ -1,9 +1,12 @@
 from uuid import UUID
-from sqlalchemy import select
+from sqlalchemy.orm import Session
+from datetime import datetime, timezone
+from sqlalchemy import select, delete, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from app.models.auth import RefreshToken
+from app.api.v1.schemas.auth import TokenStatus
 
 
 class AuthRepoV1:
@@ -19,6 +22,17 @@ class AuthRepoV1:
         db.add(refresh_token)
         await db.flush()
         await db.refresh(refresh_token)
+
+    def delete_refresh_tokens(self, db: Session):
+        stmt = delete(RefreshToken).where(
+            or_(
+                RefreshToken.status == TokenStatus.REVOKED,
+                RefreshToken.status == TokenStatus.USED,
+                RefreshToken.expires_at <= datetime.now(timezone.utc),
+            ),
+        )
+
+        db.execute(stmt)
 
 
 auth_repo_v1 = AuthRepoV1()

@@ -21,4 +21,4 @@ class Enrollment(Base):
     __table_args__ = (PrimaryKeyConstraint("user_id", "course_id", name="enrol_pk"),)
 
     user = relationship("User", back_populates="enrollments", viewonly=True)
-    course =  relationship("Course", back_populates="enrollments", viewonly=True)
+    course =  relationship("Course", back_populates="enrollments", viewonly=True, lazy="selectin")

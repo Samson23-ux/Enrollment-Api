@@ -3,7 +3,7 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import text
 from sqlalchemy.pool import NullPool
-from fastapi.testclient import TestClient
+from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import (
     AsyncConnection,
     AsyncSession,
@@ -20,7 +20,7 @@ from app.dependencies import get_db
 from app.core.config import settings
 from app.api.v1.schemas.users import UserRole, UserCreateV1
 from app.api.v1.services.auth_service import auth_service_v1
-from tests.fake_data import fake_student, fake_admin, fake_course
+from tests.fake_data import fake_student, fake_admin, fake_course, fake_instructor
 
 
 """
@@ -32,9 +32,12 @@ async fixtures and tests use the same loop allowing the engine created
 in get_async_engine() fixture be used in get_async_session() fixture
 without any error.
 """
+
+
 @pytest.fixture(scope="session")
 def event_loop():
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     yield loop
     loop.close()
 
@@ -56,6 +59,10 @@ async def get_async_engine():
         await conn.run_sync(Base.metadata.create_all)
 
     yield async_engine
+
+    async with async_engine.begin() as conn:
+        # Base.metadata.drop_all() is a sync function
+        await conn.run_sync(Base.metadata.drop_all)
 
     await async_engine.dispose()
 
@@ -82,7 +89,7 @@ async def get_async_session(get_async_engine: AsyncEngine):
 
 
 @pytest_asyncio.fixture
-async def test_client(get_async_session):
+async def async_client(get_async_session):
     # wrapper for the get async session function
     # fastapi dependencies are not invoked when passed into the Depends function
     async def test_get_db():
@@ -90,15 +97,16 @@ async def test_client(get_async_session):
 
     app.dependency_overrides[get_db] = test_get_db
 
-    with TestClient(app) as client:
-        yield client
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://localhost"
+    ) as asc:
+        yield asc
 
 
 @pytest_asyncio.fixture
 async def create_role(get_async_session):
-    await auth_service_v1.create_role(UserRole.ADMIN, get_async_session)
-    await auth_service_v1.create_role(UserRole.STUDENT, get_async_session)
-    await auth_service_v1.create_role(UserRole.INSTRUCTOR, get_async_session)
+    roles: list[UserRole] = [UserRole.ADMIN, UserRole.STUDENT, UserRole.INSTRUCTOR]
+    await auth_service_v1.create_roles(roles, get_async_session)
 
 
 @pytest_asyncio.fixture
@@ -108,24 +116,34 @@ async def create_admin(create_role, get_async_session):
 
 
 @pytest_asyncio.fixture
-async def create_student(create_role, test_client):
-    res = test_client.post("/api/v1/auth/sign-up/", json=fake_student)
+async def create_student(create_role, async_client):
+    res = await async_client.post("/api/v1/auth/sign-up/", json=fake_student)
     return res
 
 
 @pytest_asyncio.fixture
-async def create_course(test_client, create_admin):
+async def create_instructor(create_role, async_client):
+    res = await async_client.post("/api/v1/auth/sign-up/", json=fake_instructor)
+    return res
+
+
+@pytest_asyncio.fixture
+async def create_course(async_client, create_admin, create_instructor):
     admin_email = fake_admin.get("email")
     admin_password = fake_admin.get("password")
 
-    sign_in_res = test_client.post(
+    instructor_res_json = create_instructor
+
+    sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": admin_email, "password": admin_password},
     )
 
     access_token = sign_in_res.json()["access_token"]
 
-    res = test_client.post(
-        "/api/v1/courses/", json=fake_course, headers={"Authorization": access_token}
+    res = await async_client.post(
+        "/api/v1/courses/",
+        json=fake_course,
+        headers={"Authorization": f"Bearer {access_token}"},
     )
-    return res
+    return res, instructor_res_json

@@ -61,4 +61,4 @@ class UserReadV1(UserReadBaseV1):
 
 
 class UserResponseV1(ResponseBase):
-    data: UserReadV1 | list[UserReadV1]
+    data: Optional[UserReadV1 | list[UserReadV1]] = None

@@ -24,9 +24,9 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID, default=text("uuid_generate_v4()"))
-    name = Column(VARCHAR(20), nullable=False)
-    email = Column(VARCHAR(20), nullable=False)
-    nationality = Column(VARCHAR(25), nullable=False)
+    name = Column(VARCHAR(50), nullable=False)
+    email = Column(VARCHAR(50), nullable=False)
+    nationality = Column(VARCHAR(50), nullable=False)
     hashed_password = Column(Text, nullable=False)
     role_id = Column(
         UUID,
@@ -52,9 +52,13 @@ class User(Base):
         UniqueConstraint("email", name="users_email_unique_key"),
     )
 
-    role = relationship("Role", viewonly=True)
+    role = relationship("Role", viewonly=True, lazy="selectin")
     courses = relationship(
-        "Course", back_populates="users", secondary="enrollments", passive_deletes=True
+        "Course",
+        back_populates="users",
+        secondary="enrollments",
+        passive_deletes=True,
+        lazy="selectin",
     )
     enrollments = relationship("Enrollment", back_populates="user", viewonly=True)
 

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel
 
 
@@ -18,4 +19,4 @@ class EnrollmentReadV1(EnrollmentBaseV1):
 
 
 class EnrollmentResponseV1(ResponseBase):
-    data: EnrollmentReadV1 | list[EnrollmentReadV1]
+    data: Optional[EnrollmentReadV1 | list[EnrollmentReadV1]] = None

@@ -36,5 +36,14 @@ class Settings(BaseSettings):
     # Sentry
     SENTRY_SDK_DSN: str
 
+    # Admin User
+    ADMIN_NAME: str
+    ADMIN_EMAIL: str
+    ADMIN_NATIONALITY: str
+    ADMIN_PASSWORD: str
+
+    # Task Broker
+    BROKER_URL: str
+
 
 settings = Settings()

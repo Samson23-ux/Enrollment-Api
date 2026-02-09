@@ -33,8 +33,62 @@ class UserExistsError(AppException):
     pass
 
 
+class CourseExistsError(AppException):
+    """Course already exists"""
+
+    pass
+
+
+class EnrollmentExistsError(AppException):
+    """User already enrolled"""
+
+    pass
+
+
+class EnrollmentError(AppException):
+    """Course is full"""
+
+    pass
+
+
+class EnrollmentNotFoundError(AppException):
+    """User not enrolled"""
+
+    pass
+
+
+class EnrollmentsNotFoundError(AppException):
+    """Enrollments not found"""
+
+    pass
+
+
 class UserNotFoundError(AppException):
     """User not found"""
+
+    pass
+
+
+class UsersNotFoundError(AppException):
+    """Users not found"""
+
+    pass
+
+
+class StudentsNotFoundError(AppException):
+    """Students not found"""
+
+    pass
+
+
+class InstructorNotFoundError(AppException):
+    """Instructor not found"""
+
+    pass
+
+
+class InstructorsNotFoundError(AppException):
+    """Instructors not found"""
 
     pass
 
@@ -45,13 +99,19 @@ class CoursesNotFoundError(AppException):
     pass
 
 
+class CourseNotFoundError(AppException):
+    """Course not found"""
+
+    pass
+
+
 class CredentialError(AppException):
     """Wrong credentials provided"""
 
     pass
 
 
-async def create_handler(
+def create_handler(
     status_code: int, initial_detail: dict
 ) -> callable[[Request, AppException], JSONResponse]:
     async def exception_handler(req: Request, exc: AppException):
@@ -59,4 +119,4 @@ async def create_handler(
         initial_detail["timestamp"] = error_time
         return JSONResponse(content=initial_detail, status_code=status_code)
 
-    return await exception_handler
+    return exception_handler

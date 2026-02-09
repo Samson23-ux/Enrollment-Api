@@ -16,7 +16,7 @@ fake_instructor: dict = {
 
 fake_admin: dict = {
     "name": "fake admin",
-    "email": "fakeadmin@example.com",
+    "email": "admin@example.com",
     "nationality": "fakenationality",
     "password": "fakepassword"
 }
@@ -25,7 +25,7 @@ fake_admin: dict = {
 fake_course: dict = {
     "title": "fake_title",
     "description": "a fake course for tests",
-    "code": "fakecoursecode",
+    "code": "fakecode",
     "instructor": fake_instructor.get("name"),
     "capacity": 20,
     "duration": 2

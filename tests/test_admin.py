@@ -6,18 +6,18 @@ from tests.fake_data import fake_student, fake_admin
 
 
 @pytest.mark.asyncio
-async def test_get_all_students(test_client, create_admin, create_student):
+async def test_get_all_students(async_client, create_admin, create_student):
     email: str = fake_admin.get("email")
     password: str = fake_admin.get("password")
 
-    sign_in_res = test_client.post(
+    sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/", data={"username": email, "password": password}
     )
 
     access_token: str = sign_in_res.json()["access_token"]
 
-    res = test_client.get(
-        "/api/v1/admin/students/", headers={"Authorization": access_token}
+    res = await async_client.get(
+        "/api/v1/admin/students/", headers={"Authorization": f"Bearer {access_token}"}
     )
 
     json_res = res.json()
@@ -27,18 +27,25 @@ async def test_get_all_students(test_client, create_admin, create_student):
 
 
 @pytest.mark.asyncio
-async def test_get_all_courses(test_client, create_course):
+async def test_get_all_instructors(async_client, create_admin, create_instructor):
     email: str = fake_admin.get("email")
     password: str = fake_admin.get("password")
 
-    sign_in_res = test_client.post(
+    sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/", data={"username": email, "password": password}
     )
 
     access_token: str = sign_in_res.json()["access_token"]
+    instructor_id: UUID = create_instructor.json()["data"]["id"]
 
-    res = test_client.get(
-        "/api/v1/admin/courses/", headers={"Authorization": access_token}
+    await async_client.patch(
+        f"/api/v1/admin/users/{instructor_id}/assign-instructor-role/",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    res = await async_client.get(
+        "/api/v1/admin/instructors/",
+        headers={"Authorization": f"Bearer {access_token}"},
     )
 
     json_res = res.json()
@@ -48,34 +55,36 @@ async def test_get_all_courses(test_client, create_course):
 
 
 @pytest.mark.asyncio
-async def test_get_all_enrollments(test_client, create_student, create_course):
+async def test_get_all_enrollments(async_client, create_student, create_course):
+    course, _ = create_course
     admin_email: str = fake_admin.get("email")
     admin_password: str = fake_admin.get("password")
 
     student_email: str = fake_student.get("email")
     student_password: str = fake_student.get("password")
 
-    admin_sign_in_res = test_client.post(
+    admin_sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": admin_email, "password": admin_password},
     )
 
-    student_sign_in_res = test_client.post(
+    student_sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": student_email, "password": student_password},
     )
 
-    course_id: UUID = create_course.json()["data"]["id"]
+    course_id: UUID = course.json()["data"]["id"]
     admin_access_token: str = admin_sign_in_res.json()["access_token"]
     student_access_token: str = student_sign_in_res.json()["access_token"]
 
-    test_client.post(
+    await async_client.post(
         f"/api/v1/courses/{course_id}/enrollments/",
-        headers={"Authorization": student_access_token},
+        headers={"Authorization": f"Bearer {student_access_token}"},
     )
 
-    res = test_client.get(
-        "/api/v1/admin/enrollments/", headers={"Authorization": admin_access_token}
+    res = await async_client.get(
+        "/api/v1/admin/enrollments/",
+        headers={"Authorization": f"Bearer {admin_access_token}"},
     )
 
     json_res = res.json()
@@ -85,35 +94,36 @@ async def test_get_all_enrollments(test_client, create_student, create_course):
 
 
 @pytest.mark.asyncio
-async def test_get_course_enrollments(test_client, create_student, create_course):
+async def test_get_course_enrollments(async_client, create_student, create_course):
+    course, _ = create_course
     admin_email: str = fake_admin.get("email")
     admin_password: str = fake_admin.get("password")
 
     student_email: str = fake_student.get("email")
     student_password: str = fake_student.get("password")
 
-    admin_sign_in_res = test_client.post(
+    admin_sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": admin_email, "password": admin_password},
     )
 
-    student_sign_in_res = test_client.post(
+    student_sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": student_email, "password": student_password},
     )
 
-    course_id: UUID = create_course.json()["data"]["id"]
+    course_id: UUID = course.json()["data"]["id"]
     admin_access_token: str = admin_sign_in_res.json()["access_token"]
     student_access_token: str = student_sign_in_res.json()["access_token"]
 
-    test_client.post(
+    await async_client.post(
         f"/api/v1/courses/{course_id}/enrollments/",
-        headers={"Authorization": student_access_token},
+        headers={"Authorization": f"Bearer {student_access_token}"},
     )
 
-    res = test_client.get(
+    res = await async_client.get(
         f"/api/v1/admin/courses/{course_id}/enrollments/",
-        headers={"Authorization": admin_access_token},
+        headers={"Authorization": f"Bearer {admin_access_token}"},
     )
 
     json_res = res.json()
@@ -123,11 +133,11 @@ async def test_get_course_enrollments(test_client, create_student, create_course
 
 
 @pytest.mark.asyncio
-async def test_assign_admin_role(test_client, create_student, create_admin):
+async def test_assign_admin_role(async_client, create_student, create_admin):
     email: str = fake_admin.get("email")
     password: str = fake_admin.get("password")
 
-    sign_in_res = test_client.post(
+    sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": email, "password": password},
     )
@@ -135,9 +145,9 @@ async def test_assign_admin_role(test_client, create_student, create_admin):
     student_id: UUID = create_student.json()["data"]["id"]
     access_token: str = sign_in_res.json()["access_token"]
 
-    res = test_client.patch(
+    res = await async_client.patch(
         f"/api/v1/admin/users/{student_id}/assign-admin-role/",
-        headers={"Authorization": access_token},
+        headers={"Authorization": f"Bearer {access_token}"},
     )
 
     json_res = res.json()
@@ -147,11 +157,11 @@ async def test_assign_admin_role(test_client, create_student, create_admin):
 
 
 @pytest.mark.asyncio
-async def test_assign_instructor_role(test_client, create_student, create_admin):
+async def test_assign_instructor_role(async_client, create_student, create_admin):
     email: str = fake_admin.get("email")
     password: str = fake_admin.get("password")
 
-    sign_in_res = test_client.post(
+    sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": email, "password": password},
     )
@@ -159,58 +169,59 @@ async def test_assign_instructor_role(test_client, create_student, create_admin)
     student_id: UUID = create_student.json()["data"]["id"]
     access_token: str = sign_in_res.json()["access_token"]
 
-    res = test_client.patch(
+    res = await async_client.patch(
         f"/api/v1/admin/users/{student_id}/assign-instructor-role/",
-        headers={"Authorization": access_token},
+        headers={"Authorization": f"Bearer {access_token}"},
     )
 
     json_res = res.json()
 
     assert res.status_code == 200
-    assert json_res["data"]["role"] == UserRole.ADMIN
+    assert json_res["data"]["role"] == UserRole.INSTRUCTOR
 
 
 @pytest.mark.asyncio
-async def test_unauthenticated_admin(test_client):
-    res = test_client.get("/api/v1/admin/students/")
+async def test_unauthenticated_admin(async_client):
+    res = await async_client.get("/api/v1/admin/students/")
 
     assert res.status_code == 401
 
 
 @pytest.mark.asyncio
-async def test_unauthorized_admin(test_client, create_student):
+async def test_unauthorized_admin(async_client, create_student):
     email: str = fake_student.get("email")
     password: str = fake_student.get("password")
 
-    sign_in_res = test_client.post(
+    sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": email, "password": password},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
 
-    res = test_client.get(
-        "/api/v1/admin/students/", headers={"Authorization": access_token}
+    res = await async_client.get(
+        "/api/v1/admin/students/", headers={"Authorization": f"Bearer {access_token}"}
     )
 
-    assert res.status_code == 401
+    assert res.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_user_not_found_admin(test_client, create_admin):
+async def test_user_not_found_admin(async_client, create_admin):
     email: str = fake_admin.get("email")
     password: str = fake_admin.get("password")
 
-    sign_in_res = test_client.post(
+    sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": email, "password": password},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
 
-    res = test_client.patch(
-        f"/api/v1/admin/users/{uuid4()}]/assign-admin-role/",
-        headers={"Authorization": access_token},
+    res = await async_client.patch(
+        f"/api/v1/admin/users/{uuid4()}/assign-admin-role/",
+        headers={"Authorization": f"Bearer {access_token}"},
     )
+    print(res.json())
 
     assert res.status_code == 404

@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.users import User
 from app.api.v1.schemas.users import UserRole
 from app.dependencies import get_db, required_roles
-from app.api.v1.schemas.enrollments import EnrollmentResponseV1
+from app.api.v1.services.enrol_service import enrol_service_v1
+from app.api.v1.schemas.enrollments import EnrollmentResponseV1, EnrollmentReadV1
 
 
 enrollments_router_v1 = APIRouter()
@@ -24,7 +25,13 @@ async def create_enrollment(
     curr_user: User = Depends(required_roles([UserRole.STUDENT])),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
+    refresh_token: str = request.cookies.get("refresh_token")
+    course_enrol: EnrollmentReadV1 = await enrol_service_v1.create_enrollment(
+        curr_user, course_id, refresh_token, db
+    )
+    return EnrollmentResponseV1(
+        message="Course enrolled successfully", data=course_enrol
+    )
 
 
 @enrollments_router_v1.delete(
@@ -38,4 +45,7 @@ async def delete_enrollment(
     curr_user: User = Depends(required_roles([UserRole.STUDENT])),
     db: AsyncSession = Depends(get_db),
 ):
-    pass
+    refresh_token: str = request.cookies.get("refresh_token")
+    await enrol_service_v1.delete_enrollment(
+        curr_user, course_id, refresh_token, db
+    )

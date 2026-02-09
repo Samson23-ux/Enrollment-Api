@@ -52,7 +52,7 @@ async def sign_in(
 
 @auth_router_v1.get(
     "/auth/refresh/",
-    status_code=201,
+    status_code=200,
     response_model=TokenV1,
     description="Get a new access token with a valid refresh token",
 )
@@ -120,6 +120,22 @@ async def reactivate_account(
 ):
     user: UserReadV1 = await auth_service_v1.reactivate_account(email, password, db)
     return UserResponseV1(message="User account reactivated successfully", data=user)
+
+
+@auth_router_v1.patch(
+    "/auth/logout/",
+    status_code=200,
+    response_model=UserResponseV1,
+    description="Logout",
+)
+async def logout_user(
+    request: Request,
+    curr_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    refresh_token: str = request.cookies.get("refresh_token")
+    await auth_service_v1.logout(curr_user, refresh_token, db)
+    return UserResponseV1(message="User logout successfully")
 
 
 @auth_router_v1.delete(

@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import (
     text,
     UUID,
+    Text,
     Index,
     Column,
     Boolean,
@@ -23,8 +24,8 @@ class Course(Base):
     __tablename__ = "courses"
 
     id = Column(UUID, default=text("uuid_generate_v4()"))
-    title = Column(VARCHAR(20), nullable=False)
-    description = Column(VARCHAR(50), nullable=False)
+    title = Column(VARCHAR(50), nullable=False)
+    description = Column(Text, nullable=False)
     code = Column(VARCHAR(20), nullable=False)
     capacity = Column(
         Integer,
@@ -39,7 +40,7 @@ class Course(Base):
         nullable=False,
     )
     total_students = Column(
-        Integer, nullable=False
+        Integer, default=0, nullable=False
     )  # total students currently enrolled for the course
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
@@ -56,7 +57,7 @@ class Course(Base):
     )
 
     instructor = relationship(
-        "User", foreign_keys="Course.instructor_id", viewonly=True
+        "User", foreign_keys="Course.instructor_id", viewonly=True, lazy="selectin"
     )
 
     users = relationship(
