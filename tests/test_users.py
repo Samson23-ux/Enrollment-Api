@@ -27,7 +27,7 @@ async def test_get_user_profile(async_client, create_student):
 
 @pytest.mark.asyncio
 async def test_get_user_courses(async_client, create_student, create_course):
-    course, _ = create_course
+    course, tt = create_course
     email: str = fake_student.get("email")
     password: str = fake_student.get("password")
 

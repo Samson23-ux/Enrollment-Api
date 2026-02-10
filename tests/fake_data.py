@@ -26,7 +26,7 @@ fake_course: dict = {
     "title": "fake_title",
     "description": "a fake course for tests",
     "code": "fakecode",
-    "instructor": fake_instructor.get("name"),
+    "instructor": "fake instructor",
     "capacity": 20,
     "duration": 2
 }

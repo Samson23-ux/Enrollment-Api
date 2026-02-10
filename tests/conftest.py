@@ -132,7 +132,7 @@ async def create_course(async_client, create_admin, create_instructor):
     admin_email = fake_admin.get("email")
     admin_password = fake_admin.get("password")
 
-    instructor_res_json = create_instructor
+    instructor_id = create_instructor.json()["data"]["id"]
 
     sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
@@ -141,9 +141,14 @@ async def create_course(async_client, create_admin, create_instructor):
 
     access_token = sign_in_res.json()["access_token"]
 
+    await async_client.patch(
+        f"/api/v1/admin/users/{instructor_id}/assign-instructor-role/",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
     res = await async_client.post(
         "/api/v1/courses/",
         json=fake_course,
         headers={"Authorization": f"Bearer {access_token}"},
     )
-    return res, instructor_res_json
+    return res, create_instructor
