@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 from app.main import app
 from app.core.exceptions import (
     ServerError,
-    AppException,
     create_handler,
     UserExistsError,
     CredentialError,
@@ -24,17 +23,6 @@ from app.core.exceptions import (
     InstructorsNotFoundError,
     EnrollmentsNotFoundError,
 )
-
-
-# exception for uncaught errors
-@app.exception_handler(500)
-async def server_error_handler(req: Request, exc: AppException):
-    return JSONResponse(
-        content={
-            "error": "Internal server error",
-            "message": "Oops! Somethings went wrong",
-        }
-    )
 
 
 app.add_exception_handler(

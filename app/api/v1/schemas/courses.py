@@ -40,7 +40,7 @@ class CourseUpdateV1(BaseModel):
     description: Optional[str] = Field(default=None, min_length=10, max_length=50)
     code: Optional[str] = Field(default=None, min_length=3)
     instructor: Optional[str] = Field(default=None, min_length=8)
-    capacity: Optional[int] = Field(default=None, min_length=10)
+    capacity: Optional[int] = Field(default=None, ge=10)
     duration: Optional[int] = None
 
 

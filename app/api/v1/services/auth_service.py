@@ -35,19 +35,6 @@ class AuthServiceV1:
         refresh_token_db: str = auth_token_data.get("refresh_token_db")
         await auth_repo_v1.add_token(refresh_token_db, db)
 
-        # try:
-        #     refresh_token_db: str = auth_token_data.get("refresh_token_db")
-        #     await auth_repo_v1.add_token(refresh_token_db, db)
-        #     await db.commit()
-        #     sentry_logger.info("Refresh token stored in database")
-        # except Exception as e:
-        #     await db.rollback()
-        #     sentry_sdk.capture_exception(e)
-        #     sentry_logger.error(
-        #         "Internal server error occured while storing refresh token in database"
-        #     )
-        #     raise ServerError() from e
-
         access_token: str = auth_token_data.get("access_token")
         refresh_token: str = auth_token_data.get("refresh_token")
 
@@ -60,20 +47,6 @@ class AuthServiceV1:
             refresh_token.status = status
         else:
             refresh_token.status = TokenStatus.REVOKED
-
-        # await auth_repo_v1.add_token(refresh_token, db)
-
-        # try:
-        #     await auth_repo_v1.add_token(refresh_token, db)
-        #     await db.commit()
-        #     sentry_logger.info("Refresh token status updated")
-        # except Exception as e:
-        #     await db.rollback()
-        #     sentry_sdk.capture_exception(e)
-        #     sentry_logger.error(
-        #         "Internal server error occured while updating refresh token status"
-        #     )
-        #     raise ServerError() from e
 
     async def create_roles(self, roles: list[UserRole], db: AsyncSession):
         for role in roles:
@@ -179,11 +152,12 @@ class AuthServiceV1:
         try:
             auth_tokens: tuple[str] = await self.get_tokens(user.id, db)
 
-            await db.commit()
-
             sentry_logger.info("User {id} signed in", id=user.id)
+
+            await db.commit()
             return auth_tokens
         except Exception as e:
+            print("HERE")
             await db.rollback()
             sentry_sdk.capture_exception(e)
             sentry_logger.error(
@@ -206,9 +180,9 @@ class AuthServiceV1:
             user_id: UUID = refresh_token.user_id
             auth_tokens: tuple[str] = await self.get_tokens(user_id, db)
 
-            await db.commit()
-
             sentry_logger.info("Access token created")
+
+            await db.commit()
             return auth_tokens
         except Exception as e:
             await db.rollback()
@@ -300,8 +274,8 @@ class AuthServiceV1:
             refresh_token.revoked_at = datetime.now(timezone.utc)
 
             await auth_repo_v1.add_token(refresh_token, db)
-            await db.commit()
             sentry_logger.info("User {id} logout", id=curr_user.id)
+            await db.commit()
         except Exception as e:
             await db.rollback()
             sentry_sdk.capture_exception(e)
@@ -367,8 +341,8 @@ class AuthServiceV1:
             curr_user.delete_at = datetime.now(timezone.utc) + timedelta(days=30)
             await user_service_v1.add_user(curr_user, db)
 
-            await db.commit()
             sentry_logger.info("User {id} account reactivated", id=curr_user.id)
+            await db.commit()
         except Exception as e:
             await db.rollback()
             sentry_sdk.capture_exception(e)
@@ -398,8 +372,8 @@ class AuthServiceV1:
             user_id = curr_user.id
             await user_service_v1.delete_user(curr_user, db)
 
-            await db.commit()
             sentry_logger.info("User {id} account deleted", id=user_id)
+            await db.commit()
         except Exception as e:
             await db.rollback()
             sentry_sdk.capture_exception(e)
@@ -412,8 +386,8 @@ class AuthServiceV1:
     def delete_refresh_tokens(self, db: Session):
         try:
             auth_repo_v1.delete_refresh_tokens(db)
-            db.commit()
             sentry_logger.info('Refresh tokens deleted')
+            db.commit()
         except Exception as e:
             db.rollback()
             sentry_sdk.capture_exception(e)

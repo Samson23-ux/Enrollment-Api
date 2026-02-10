@@ -20,8 +20,12 @@ class UserRepoV1:
         user: User | None = res.scalar()
         return user
 
-    async def get_user_id(self, name: str, db: AsyncSession) -> UUID | None:
-        stmt = select(User.id).where(and_(User.name == name, User.is_active.is_(True)))
+    async def get_instructor_id(
+        self, name: str, role_id: UUID, db: AsyncSession
+    ) -> UUID | None:
+        stmt = select(User.id).where(
+            and_(User.name == name, User.role_id == role_id, User.is_active.is_(True))
+        )
         res = await db.execute(stmt)
         user_id: UUID | None = res.scalar()
         return user_id

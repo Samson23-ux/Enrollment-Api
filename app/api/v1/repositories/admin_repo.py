@@ -4,7 +4,6 @@ from sqlalchemy import select, desc, Sequence
 
 
 from app.models.users import User
-from app.models.courses import Course
 from app.models.enrollments import Enrollment
 
 
@@ -19,7 +18,7 @@ class AdminRepo:
         offset: int,
         limit: int,
     ) -> Sequence[User]:
-        sortable_fields: dict = {"created_at": Course.created_at}
+        sortable_fields: dict = {"created_at": User.created_at}
 
         stmt = select(User).where(User.role_id == role_id)
 
@@ -29,7 +28,7 @@ class AdminRepo:
         stmt = stmt.offset(offset).limit(limit)
 
         if sort:
-            sort = sortable_fields.get(sort, Course.created_at)
+            sort = sortable_fields.get(sort, User.created_at)
             if order == "desc":
                 stmt = stmt.order_by(desc(sort))
             else:
@@ -50,7 +49,7 @@ class AdminRepo:
         offset: int,
         limit: int,
     ) -> Sequence[User]:
-        sortable_fields: dict = {"created_at": Course.created_at}
+        sortable_fields: dict = {"created_at": User.created_at}
 
         stmt = select(User).where(User.role_id == role_id)
 
@@ -60,7 +59,7 @@ class AdminRepo:
         stmt = stmt.offset(offset).limit(limit)
 
         if sort:
-            sort = sortable_fields.get(sort, Course.created_at)
+            sort = sortable_fields.get(sort, User.created_at)
             if order == "desc":
                 stmt = stmt.order_by(desc(sort))
             else:
@@ -79,14 +78,14 @@ class AdminRepo:
         limit: int,
         db: AsyncSession,
     ) -> Sequence[Enrollment]:
-        sortable_fields: dict = {"created_at": Course.created_at}
+        sortable_fields: dict = {"created_at": Enrollment.created_at}
 
         stmt = select(Enrollment)
 
         stmt = stmt.offset(offset).limit(limit)
 
         if sort:
-            sort = sortable_fields.get(sort, Course.created_at)
+            sort = sortable_fields.get(sort, Enrollment.created_at)
             if order == "desc":
                 stmt = stmt.order_by(desc(sort))
             else:
@@ -107,14 +106,14 @@ class AdminRepo:
         limit: int,
         db: AsyncSession,
     ) -> Sequence[Enrollment]:
-        sortable_fields: dict = {"created_at": Course.created_at}
+        sortable_fields: dict = {"created_at": Enrollment.created_at}
 
         stmt = select(Enrollment).where(Enrollment.course_id == course_id)
 
         stmt = stmt.offset(offset).limit(limit)
 
         if sort:
-            sort = sortable_fields.get(sort, Course.created_at)
+            sort = sortable_fields.get(sort, Enrollment.created_at)
             if order == "desc":
                 stmt = stmt.order_by(desc(sort))
             else:

@@ -5,8 +5,9 @@ import sentry_sdk.logger as sentry_logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-from app.models.users import User
 from app.models.courses import Course
+from app.models.users import User, Role
+from app.api.v1.schemas.users import UserRole
 from app.core.security import validate_refresh_token
 from app.api.v1.services.user_service import user_service_v1
 from app.api.v1.repositories.course_repo import course_repo_v1
@@ -33,12 +34,19 @@ class CourseServiceV1:
         q: str | None,
         sort: str | None,
         order: str | None,
-        is_active: bool = True,
+        is_active: bool | None,
         page: int = 1,
         limit: int = 15,
     ) -> list[CourseReadV1]:
         """to view only active courses, the is_active parameter is set to True"""
         _ = await validate_refresh_token(refresh_token, db)
+
+        # prevent negative or float numbers
+        if page < 1 or not isinstance(page, int):
+            page: int = 1
+        
+        if limit < 1 or not isinstance(limit, int):
+            limit: int = 15
 
         offset: int = (page * limit) - limit
 
@@ -130,16 +138,18 @@ class CourseServiceV1:
                 "User {id} attempted to create an existing course", id=curr_user.id
             )
             raise CourseExistsError()
+        
+        user_role: Role = await user_service_v1.get_role(UserRole.INSTRUCTOR, db)
 
-        instructor_id: UUID | None = await user_service_v1.get_user_id(
-            course_create.instructor, db
+        instructor_id: UUID | None = await user_service_v1.get_instructor_id(
+            course_create.instructor, user_role.id, db
         )
 
         if not instructor_id:
             sentry_logger.error(
                 "Instructor for course {name} does not exists", db=course_create.title
             )
-            InstructorNotFoundError()
+            raise InstructorNotFoundError()
 
         try:
             course_db: Course = Course(
@@ -196,8 +206,10 @@ class CourseServiceV1:
                 raise CourseExistsError()
 
         if course_update.instructor:
-            instructor_id: UUID | None = await user_service_v1.get_user_id(
-                course_update.instructor, db
+            user_role: Role = await user_service_v1.get_role(UserRole.INSTRUCTOR, db)
+
+            instructor_id: UUID | None = await user_service_v1.get_instructor_id(
+                course_update.instructor, user_role.id, db
             )
 
             if not instructor_id:
@@ -205,7 +217,7 @@ class CourseServiceV1:
                     "Instructor for course {name} does not exists",
                     db=course_update.title,
                 )
-                InstructorNotFoundError()
+                raise InstructorNotFoundError()
 
         course_update_dict: dict = course_update.model_dump(exclude_unset=True)
 
@@ -219,12 +231,12 @@ class CourseServiceV1:
                 **CourseReadBaseV1.model_validate(course).model_dump(),
                 instructor=course.instructor.name
             )
-            await db.commit()
             sentry_logger.info(
                 "Course {course_id} updated by admin {admin_id}",
                 course_id=course_id,
                 admin_id=curr_user.id,
             )
+            await db.commit()
             return course_read
         except Exception as e:
             await db.rollback()
@@ -254,12 +266,12 @@ class CourseServiceV1:
                 **CourseReadBaseV1.model_validate(course).model_dump(),
                 instructor=course.instructor.name
             )
-            await db.commit()
             sentry_logger.info(
                 "Course {course_id} reactivated by admin {admin_id}",
                 course_id=course_id,
                 admin_id=curr_user.id,
             )
+            await db.commit()
             return course_read
         except Exception as e:
             await db.rollback()
@@ -284,12 +296,12 @@ class CourseServiceV1:
         try:
             course.is_active = False
             await course_repo_v1.add_course(course, db)
-            await db.commit()
             sentry_logger.info(
                 "Course {course_id} deactivated by admin {admin_id}",
                 course_id=course_id,
                 admin_id=curr_user.id,
             )
+            await db.commit()
         except Exception as e:
             await db.rollback()
             sentry_sdk.capture_exception(e)
@@ -312,12 +324,12 @@ class CourseServiceV1:
 
         try:
             await course_repo_v1.delete_course(course, db)
-            await db.commit()
             sentry_logger.info(
                 "Course {course_id} deleted by admin {admin_id}",
                 course_id=course_id,
                 admin_id=curr_user.id,
             )
+            await db.commit()
         except Exception as e:
             await db.rollback()
             sentry_sdk.capture_exception(e)

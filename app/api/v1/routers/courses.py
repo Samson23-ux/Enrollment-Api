@@ -27,7 +27,7 @@ course_router_v1 = APIRouter()
 async def get_all_courses(
     request: Request,
     q: str = Query(default=None, description="Search for a course using its title"),
-    is_active: bool = Query(default=True, description="Filter course by activity"),
+    is_active: bool = Query(default=None, description="Filter course by activity"),
     page: int = Query(default=1, description="Set what page of course to view"),
     limit: int = Query(default=15, description="Set number of courses to view at once"),
     sort: str = Query(

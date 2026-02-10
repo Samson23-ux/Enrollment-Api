@@ -22,10 +22,13 @@ class CourseRepoV1:
             "duration": Course.duration,
         }
 
-        if not isinstance(is_active, bool):
-            is_active: bool = True
+        stmt = select(Course)
 
-        stmt = select(Course).where(Course.is_active.is_(is_active))
+        if is_active is not None:
+            if not isinstance(is_active, bool):
+                is_active: bool = True
+
+            stmt = stmt.where(Course.is_active.is_(is_active))
 
         if q:
             stmt = stmt.where(Course.title.ilike(q))

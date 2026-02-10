@@ -31,6 +31,13 @@ class InstructorService:
     ) -> list[CourseReadV1]:
         _ = await validate_refresh_token(refresh_token, db)
 
+        # prevent negative or float numbers
+        if page < 1 or not isinstance(page, int):
+            page: int = 1
+        
+        if limit < 1 or not isinstance(limit, int):
+            limit: int = 15
+
         offset: int = (page * limit) - limit
 
         try:
@@ -90,6 +97,13 @@ class InstructorService:
         limit: int = 15,
     ):
         _ = await validate_refresh_token(refresh_token, db)
+
+        # prevent negative or float numbers
+        if page < 1 or not isinstance(page, int):
+            page: int = 1
+        
+        if limit < 1 or not isinstance(limit, int):
+            limit: int = 15
 
         offset = (page * limit) - limit
 

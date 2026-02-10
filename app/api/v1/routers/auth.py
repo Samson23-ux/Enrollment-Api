@@ -100,7 +100,7 @@ async def update_password(
 )
 async def reset_password(
     email: str = Form(..., description="User email"),
-    new_password: str = Form(..., description="Current password"),
+    new_password: str = Form(..., description="New password"),
     db: AsyncSession = Depends(get_db),
 ):
     user: UserReadV1 = await auth_service_v1.reset_password(email, new_password, db)

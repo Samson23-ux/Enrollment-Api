@@ -6,7 +6,7 @@ from app.tasks.celery_app import celery_app
 celery_app.conf.beat_schedule = {
     "delete_tokens": {
         "task": "app.tasks.celery_tasks.delete_tokens",
-        "schedule": crontab(hour=16, minute=45)
+        "schedule": crontab(hour=16, minute=0)
     },
 
     "delete_users": {

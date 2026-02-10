@@ -32,8 +32,10 @@ class UserServiceV1:
         user: User | None = await user_repo_v1.get_user_by_email(user_email, db)
         return user
 
-    async def get_user_id(self, name: str, db: AsyncSession) -> UUID | None:
-        user_id: UUID | None = await user_repo_v1.get_user_id(name, db)
+    async def get_instructor_id(
+        self, name: str, role_id: UUID, db: AsyncSession
+    ) -> UUID | None:
+        user_id: UUID | None = await user_repo_v1.get_instructor_id(name, role_id, db)
         return user_id
 
     async def get_deactivated_user(
@@ -76,6 +78,13 @@ class UserServiceV1:
         limit: int = 15,
     ) -> list[CourseReadV1]:
         _ = await validate_refresh_token(refresh_token, db)
+
+        # prevent negative or float numbers
+        if page < 1 or not isinstance(page, int):
+            page: int = 1
+        
+        if limit < 1 or not isinstance(limit, int):
+            limit: int = 15
 
         offset: int = (page * limit) - limit
 
@@ -165,8 +174,8 @@ class UserServiceV1:
         """deletes user accounts 30 days after deactivation"""
         try:
             user_repo_v1.delete_users(db)
-            db.commit()
             sentry_logger.info("User accounts deleted permanently")
+            db.commit()
         except Exception as e:
             db.rollback()
             sentry_sdk.capture_exception(e)
