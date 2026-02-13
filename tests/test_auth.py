@@ -12,7 +12,11 @@ async def test_sign_up(create_student):
 
 @pytest.mark.asyncio
 async def test_duplicate_user(async_client, create_student):
-    res = await async_client.post("/api/v1/auth/sign-up/", json=fake_student)
+    res = await async_client.post(
+        "/api/v1/auth/sign-up/",
+        json=fake_student,
+        headers={"curr_env": "test"},
+    )
     assert res.status_code == 400
 
 
@@ -22,7 +26,9 @@ async def test_sign_in(async_client, create_student):
     password: str = fake_student.get("password")
 
     res = await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
     json_res = res.json()
 
@@ -36,7 +42,9 @@ async def test_invalid_creds(async_client, create_student):
     password: str = "invalid_password"
 
     res = await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": username, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": username, "password": password},
+        headers={"curr_env": "test"},
     )
 
     assert res.status_code == 400
@@ -48,7 +56,9 @@ async def test_get_access_token(async_client, create_student):
     password: str = fake_student.get("password")
 
     await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     res = await async_client.get(
@@ -66,7 +76,9 @@ async def test_update_password(async_client, create_student):
     password: str = fake_student.get("password")
 
     sign_in_res = await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
@@ -74,7 +86,7 @@ async def test_update_password(async_client, create_student):
     res = await async_client.patch(
         "/api/v1/auth/update-password/",
         data={"curr_password": password, "new_password": "new_password"},
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     assert res.status_code == 200
@@ -86,7 +98,9 @@ async def test_reset_password(async_client, create_student):
     password: str = fake_student.get("password")
 
     res = await async_client.patch(
-        "/api/v1/auth/reset-password/", data={"email": email, "new_password": password}
+        "/api/v1/auth/reset-password/",
+        data={"email": email, "new_password": password},
+        headers={"curr_env": "test"},
     )
 
     assert res.status_code == 200
@@ -98,7 +112,9 @@ async def test_deactivate_account(async_client, create_student):
     password: str = fake_student.get("password")
 
     sign_in_res = await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
@@ -107,7 +123,7 @@ async def test_deactivate_account(async_client, create_student):
         "DELETE",
         "/api/v1/auth/deactivate/",
         data={"password": password},
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     assert res.status_code == 204
@@ -119,7 +135,9 @@ async def test_reactivate_account(async_client, create_student):
     password: str = fake_student.get("password")
 
     sign_in_res = await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
@@ -128,12 +146,13 @@ async def test_reactivate_account(async_client, create_student):
         "DELETE",
         "/api/v1/auth/deactivate/",
         data={"password": password},
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     res = await async_client.patch(
         "/api/v1/auth/reactivate/",
         data={"email": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     assert res.status_code == 200
@@ -147,6 +166,7 @@ async def test_unauthenticated_auth(async_client, create_student):
         "DELETE",
         "/api/v1/auth/deactivate/",
         data={"password": password},
+        headers={"curr_env": "test"},
     )
 
     assert res.status_code == 401
@@ -158,7 +178,9 @@ async def test_delete_account(async_client, create_student):
     password: str = fake_student.get("password")
 
     sign_in_res = await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
@@ -167,7 +189,7 @@ async def test_delete_account(async_client, create_student):
         "DELETE",
         "/api/v1/auth/delete-account/",
         data={"password": password},
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     assert res.status_code == 204

@@ -14,6 +14,7 @@ async def test_get_instructor_courses(async_client, create_course):
     admin_sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": admin_email, "password": admin_password},
+        headers={"curr_env": "test"},
     )
 
     instructor_id: UUID = instructor.json()["data"]["id"]
@@ -22,7 +23,7 @@ async def test_get_instructor_courses(async_client, create_course):
     # assign instructor role to instructor user
     await async_client.patch(
         f"/api/v1/admin/users/{instructor_id}/assign-instructor-role/",
-        headers={"Authorization": f"Bearer {admin_access_token}"},
+        headers={"Authorization": f"Bearer {admin_access_token}", "curr_env": "test"},
     )
 
     instructor_email: str = fake_instructor.get("email")
@@ -32,6 +33,7 @@ async def test_get_instructor_courses(async_client, create_course):
     instructor_sign_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": instructor_email, "password": instructor_password},
+        headers={"curr_env": "test"},
     )
 
     instructor_access_token: str = instructor_sign_res.json()["access_token"]
@@ -39,7 +41,10 @@ async def test_get_instructor_courses(async_client, create_course):
     # get instructor courses
     res = await async_client.get(
         "/api/v1/users/instructor/me/courses/",
-        headers={"Authorization": f"Bearer {instructor_access_token}"},
+        headers={
+            "Authorization": f"Bearer {instructor_access_token}",
+            "curr_env": "test",
+        },
     )
 
     assert res.status_code == 200
@@ -56,6 +61,7 @@ async def test_get_course_students(async_client, create_student, create_course):
     admin_sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": admin_email, "password": admin_password},
+        headers={"curr_env": "test"},
     )
 
     student_email: str = fake_student.get("email")
@@ -65,6 +71,7 @@ async def test_get_course_students(async_client, create_student, create_course):
     student_sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": student_email, "password": student_password},
+        headers={"curr_env": "test"},
     )
 
     instructor_id: UUID = instructor.json()["data"]["id"]
@@ -74,7 +81,7 @@ async def test_get_course_students(async_client, create_student, create_course):
     # assign instructor role to instructor user
     await async_client.patch(
         f"/api/v1/admin/users/{instructor_id}/assign-instructor-role/",
-        headers={"Authorization": f"Bearer {admin_access_token}"},
+        headers={"Authorization": f"Bearer {admin_access_token}", "curr_env": "test"},
     )
 
     student_access_token: str = student_sign_in_res.json()["access_token"]
@@ -82,7 +89,7 @@ async def test_get_course_students(async_client, create_student, create_course):
     # enroll student for the created course
     await async_client.post(
         f"/api/v1/courses/{course_id}/enrollments/",
-        headers={"Authorization": f"Bearer {student_access_token}"},
+        headers={"Authorization": f"Bearer {student_access_token}", "curr_env": "test"},
     )
 
     instructor_email: str = fake_instructor.get("email")
@@ -92,6 +99,7 @@ async def test_get_course_students(async_client, create_student, create_course):
     instructor_sign_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": instructor_email, "password": instructor_password},
+        headers={"curr_env": "test"},
     )
 
     instructor_access_token: str = instructor_sign_res.json()["access_token"]
@@ -99,7 +107,10 @@ async def test_get_course_students(async_client, create_student, create_course):
     # get students for instructor's course
     res = await async_client.get(
         f"/api/v1/users/instructor/me/courses{course_id}/students/",
-        headers={"Authorization": f"Bearer {instructor_access_token}"},
+        headers={
+            "Authorization": f"Bearer {instructor_access_token}",
+            "curr_env": "test",
+        },
     )
 
     assert res.status_code == 200

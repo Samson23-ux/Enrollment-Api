@@ -2,8 +2,12 @@ import sentry_sdk
 from fastapi import Request, FastAPI
 from datetime import datetime, timezone
 import sentry_sdk.logger as sentry_logger
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.middleware import SlowAPIMiddleware
 
 
+from app.limiter import limiter
 from app.core.config import settings
 from app.api.v1.routers.auth import auth_router_v1
 from app.api.v1.routers.users import user_router_v1
@@ -28,6 +32,11 @@ app = FastAPI(
     description=settings.API_DESCRIPTION,
     version=settings.API_VERSION
 )
+
+
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 from app.core import exception_handlers

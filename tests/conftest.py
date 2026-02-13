@@ -52,7 +52,7 @@ async def get_async_engine():
     async with async_engine.connect() as conn:
         # initialise db with required extensions
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
-        await conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'))
+        await conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'))
 
     async with async_engine.begin() as conn:
         # Base.metadata.create_all() is a sync function
@@ -117,13 +117,18 @@ async def create_admin(create_role, get_async_session):
 
 @pytest_asyncio.fixture
 async def create_student(create_role, async_client):
-    res = await async_client.post("/api/v1/auth/sign-up/", json=fake_student)
+    # included curr_env to specify testing environment
+    res = await async_client.post(
+        "/api/v1/auth/sign-up/", json=fake_student, headers={"curr_env": "test"}
+    )
     return res
 
 
 @pytest_asyncio.fixture
 async def create_instructor(create_role, async_client):
-    res = await async_client.post("/api/v1/auth/sign-up/", json=fake_instructor)
+    res = await async_client.post(
+        "/api/v1/auth/sign-up/", json=fake_instructor, headers={"curr_env": "test"}
+    )
     return res
 
 
@@ -137,18 +142,19 @@ async def create_course(async_client, create_admin, create_instructor):
     sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": admin_email, "password": admin_password},
+        headers={"curr_env": "test"},
     )
 
     access_token = sign_in_res.json()["access_token"]
 
     await async_client.patch(
         f"/api/v1/admin/users/{instructor_id}/assign-instructor-role/",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     res = await async_client.post(
         "/api/v1/courses/",
         json=fake_course,
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
     return res, create_instructor

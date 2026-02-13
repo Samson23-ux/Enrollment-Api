@@ -120,11 +120,15 @@ async def prepare_tokens(user_id: UUID, token_data: TokenDataV1) -> dict:
 
 
 async def validate_refresh_token(refresh_token: str, db: AsyncSession) -> RefreshToken:
+    if refresh_token is None:
+        sentry_logger.error("User not authenticated")
+        raise AuthenticationError()
+    
     payload: dict | None = await decode_token(
         refresh_token, settings.REFRESH_TOKEN_SECRET_KEY
     )
 
-    if not payload:
+    if payload is None:
         sentry_logger.error("User not authenticated")
         raise AuthenticationError()
 

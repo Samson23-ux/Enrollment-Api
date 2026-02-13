@@ -11,7 +11,9 @@ async def test_create_enrollments(async_client, create_student, create_course):
     password: str = fake_student.get("password")
 
     sign_in_res = await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
@@ -19,7 +21,7 @@ async def test_create_enrollments(async_client, create_student, create_course):
 
     res = await async_client.post(
         f"/api/v1/courses/{course_id}/enrollments/",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     assert res.status_code == 201
@@ -32,7 +34,9 @@ async def test_delete_enrollments(async_client, create_student, create_course):
     password: str = fake_student.get("password")
 
     sign_in_res = await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
@@ -40,13 +44,13 @@ async def test_delete_enrollments(async_client, create_student, create_course):
 
     await async_client.post(
         f"/api/v1/courses/{course_id}/enrollments/",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     res = await async_client.request(
         "DELETE",
         f"/api/v1/courses/{course_id}/enrollments/",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     assert res.status_code == 204
@@ -57,7 +61,10 @@ async def test_unauthenticated_enrollments(async_client, create_student, create_
     course, _ = create_course
 
     course_id: UUID = course.json()["data"]["id"]
-    res = await async_client.post(f"/api/v1/courses/{course_id}/enrollments/")
+    res = await async_client.post(
+        f"/api/v1/courses/{course_id}/enrollments/",
+        headers={"curr_env": "test"},
+    )
 
     assert res.status_code == 401
 
@@ -69,7 +76,9 @@ async def test_unauthorized_enrollments(async_client, create_admin, create_cours
     password: str = fake_admin.get("password")
 
     sign_in_res = await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
@@ -77,7 +86,7 @@ async def test_unauthorized_enrollments(async_client, create_admin, create_cours
 
     res = await async_client.post(
         f"/api/v1/courses/{course_id}/enrollments/",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     assert res.status_code == 403

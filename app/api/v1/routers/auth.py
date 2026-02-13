@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordRequestForm
 
 
+from app.limiter import limiter
 from app.models.users import User
 from app.core.config import settings
 from app.api.v1.schemas.auth import TokenV1
@@ -22,7 +23,8 @@ auth_router_v1 = APIRouter()
     response_model=UserResponseV1,
     description="Create user account",
 )
-async def sign_up(user_create: UserCreateV1, db: AsyncSession = Depends(get_db)):
+@limiter.limit("3/5minutes")
+async def sign_up(request: Request, user_create: UserCreateV1, db: AsyncSession = Depends(get_db)):
     user: UserReadV1 = await auth_service_v1.sign_up(user_create, db)
     return UserResponseV1(message="User created successfully", data=user)
 
@@ -33,7 +35,9 @@ async def sign_up(user_create: UserCreateV1, db: AsyncSession = Depends(get_db))
     response_model=TokenV1,
     description="Sign in with user credentials. Username field represent user email",
 )
+@limiter.limit("3/5minutes")
 async def sign_in(
+    request: Request,
     response: Response,
     sign_in_form: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
@@ -56,6 +60,7 @@ async def sign_in(
     response_model=TokenV1,
     description="Get a new access token with a valid refresh token",
 )
+@limiter.limit("3/5minutes")
 async def get_access_token(
     request: Request, response: Response, db: AsyncSession = Depends(get_db)
 ):
@@ -78,6 +83,7 @@ async def get_access_token(
     response_model=UserResponseV1,
     description="Update user password",
 )
+@limiter.limit("3/5minutes")
 async def update_password(
     request: Request,
     curr_password: str = Form(..., description="Current password"),
@@ -98,7 +104,9 @@ async def update_password(
     response_model=UserResponseV1,
     description="Reset user password",
 )
+@limiter.limit("3/5minutes")
 async def reset_password(
+    request: Request,
     email: str = Form(..., description="User email"),
     new_password: str = Form(..., description="New password"),
     db: AsyncSession = Depends(get_db),
@@ -113,7 +121,9 @@ async def reset_password(
     response_model=UserResponseV1,
     description="Reactivate user account",
 )
+@limiter.limit("3/5minutes")
 async def reactivate_account(
+    request: Request,
     email: str = Form(..., description="User email"),
     password: str = Form(..., description="Current password"),
     db: AsyncSession = Depends(get_db),
@@ -128,6 +138,7 @@ async def reactivate_account(
     response_model=UserResponseV1,
     description="Logout",
 )
+@limiter.limit("3/5minutes")
 async def logout_user(
     request: Request,
     curr_user: User = Depends(get_current_user),
@@ -143,6 +154,7 @@ async def logout_user(
     status_code=204,
     description="Deactivate user account. Account will be deleted after 30 days",
 )
+@limiter.limit("3/5minutes")
 async def deactivate_account(
     request: Request,
     password: str = Form(..., description="Current password"),
@@ -158,6 +170,7 @@ async def deactivate_account(
     status_code=204,
     description="Delete user account permanently",
 )
+@limiter.limit("3/5minutes")
 async def delete_account(
     request: Request,
     password: str = Form(..., description="Current password"),

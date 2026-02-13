@@ -1,8 +1,8 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
-from sqlalchemy import select, delete, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete, or_, text
 
 
 from app.models.auth import RefreshToken

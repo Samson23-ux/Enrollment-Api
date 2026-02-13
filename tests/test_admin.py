@@ -11,13 +11,16 @@ async def test_get_all_students(async_client, create_admin, create_student):
     password: str = fake_admin.get("password")
 
     sign_in_res = await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
 
     res = await async_client.get(
-        "/api/v1/admin/students/", headers={"Authorization": f"Bearer {access_token}"}
+        "/api/v1/admin/students/",
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     json_res = res.json()
@@ -32,7 +35,9 @@ async def test_get_all_instructors(async_client, create_admin, create_instructor
     password: str = fake_admin.get("password")
 
     sign_in_res = await async_client.post(
-        "/api/v1/auth/sign-in/", data={"username": email, "password": password}
+        "/api/v1/auth/sign-in/",
+        data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
@@ -40,12 +45,12 @@ async def test_get_all_instructors(async_client, create_admin, create_instructor
 
     await async_client.patch(
         f"/api/v1/admin/users/{instructor_id}/assign-instructor-role/",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     res = await async_client.get(
         "/api/v1/admin/instructors/",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     json_res = res.json()
@@ -66,11 +71,13 @@ async def test_get_all_enrollments(async_client, create_student, create_course):
     admin_sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": admin_email, "password": admin_password},
+        headers={"curr_env": "test"},
     )
 
     student_sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": student_email, "password": student_password},
+        headers={"curr_env": "test"},
     )
 
     course_id: UUID = course.json()["data"]["id"]
@@ -79,12 +86,12 @@ async def test_get_all_enrollments(async_client, create_student, create_course):
 
     await async_client.post(
         f"/api/v1/courses/{course_id}/enrollments/",
-        headers={"Authorization": f"Bearer {student_access_token}"},
+        headers={"Authorization": f"Bearer {student_access_token}", "curr_env": "test"},
     )
 
     res = await async_client.get(
         "/api/v1/admin/enrollments/",
-        headers={"Authorization": f"Bearer {admin_access_token}"},
+        headers={"Authorization": f"Bearer {admin_access_token}", "curr_env": "test"},
     )
 
     json_res = res.json()
@@ -105,11 +112,13 @@ async def test_get_course_enrollments(async_client, create_student, create_cours
     admin_sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": admin_email, "password": admin_password},
+        headers={"curr_env": "test"},
     )
 
     student_sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": student_email, "password": student_password},
+        headers={"curr_env": "test"},
     )
 
     course_id: UUID = course.json()["data"]["id"]
@@ -118,12 +127,12 @@ async def test_get_course_enrollments(async_client, create_student, create_cours
 
     await async_client.post(
         f"/api/v1/courses/{course_id}/enrollments/",
-        headers={"Authorization": f"Bearer {student_access_token}"},
+        headers={"Authorization": f"Bearer {student_access_token}", "curr_env": "test"},
     )
 
     res = await async_client.get(
         f"/api/v1/admin/courses/{course_id}/enrollments/",
-        headers={"Authorization": f"Bearer {admin_access_token}"},
+        headers={"Authorization": f"Bearer {admin_access_token}", "curr_env": "test"},
     )
 
     json_res = res.json()
@@ -140,6 +149,7 @@ async def test_assign_admin_role(async_client, create_student, create_admin):
     sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     student_id: UUID = create_student.json()["data"]["id"]
@@ -147,7 +157,7 @@ async def test_assign_admin_role(async_client, create_student, create_admin):
 
     res = await async_client.patch(
         f"/api/v1/admin/users/{student_id}/assign-admin-role/",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     json_res = res.json()
@@ -164,6 +174,7 @@ async def test_assign_instructor_role(async_client, create_student, create_admin
     sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     student_id: UUID = create_student.json()["data"]["id"]
@@ -171,7 +182,7 @@ async def test_assign_instructor_role(async_client, create_student, create_admin
 
     res = await async_client.patch(
         f"/api/v1/admin/users/{student_id}/assign-instructor-role/",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     json_res = res.json()
@@ -182,7 +193,9 @@ async def test_assign_instructor_role(async_client, create_student, create_admin
 
 @pytest.mark.asyncio
 async def test_unauthenticated_admin(async_client):
-    res = await async_client.get("/api/v1/admin/students/")
+    res = await async_client.get(
+        "/api/v1/admin/students/", headers={"curr_env": "test"}
+    )
 
     assert res.status_code == 401
 
@@ -195,12 +208,14 @@ async def test_unauthorized_admin(async_client, create_student):
     sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
 
     res = await async_client.get(
-        "/api/v1/admin/students/", headers={"Authorization": f"Bearer {access_token}"}
+        "/api/v1/admin/students/",
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
 
     assert res.status_code == 403
@@ -214,13 +229,14 @@ async def test_user_not_found_admin(async_client, create_admin):
     sign_in_res = await async_client.post(
         "/api/v1/auth/sign-in/",
         data={"username": email, "password": password},
+        headers={"curr_env": "test"},
     )
 
     access_token: str = sign_in_res.json()["access_token"]
 
     res = await async_client.patch(
         f"/api/v1/admin/users/{uuid4()}/assign-admin-role/",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={"Authorization": f"Bearer {access_token}", "curr_env": "test"},
     )
     print(res.json())
 
