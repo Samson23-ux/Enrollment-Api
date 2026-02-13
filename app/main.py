@@ -60,5 +60,6 @@ async def request_middleware(request: Request, call_next):
 
 
 @app.get("/api/v1/health/", status_code=200, description="Check api health")
-async def health_check():
+@limiter.limit("1/5seconds")
+async def health_check(request: Request):
     return {"message": "OK"}

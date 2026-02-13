@@ -91,7 +91,7 @@ An enrollment API connecting interested students to their desired courses. Stude
 
 2. Test endpoints via live URL 🌐:
    **Note**: Some services are hosted on a free tier and may not be available after a few days.
-   - Live URL: `<Insert live URL>`
+   - Live URL: `https://enrollment-api-165h.onrender.com`
 
 ## Testing 🧪
 
