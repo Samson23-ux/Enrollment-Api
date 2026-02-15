@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.users import User
 from app.dependencies import get_db, required_roles
-from app.api.v1.schemas.courses import CourseResponseV1
 from app.api.v1.services.admin_service import admin_service_v1
 from app.api.v1.schemas.enrollments import EnrollmentResponseV1
 from app.api.v1.schemas.users import UserRole, UserResponseV1, UserReadV1

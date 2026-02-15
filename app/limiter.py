@@ -14,4 +14,4 @@ def get_test_id(request: Request):
     return get_remote_address
 
 
-limiter = Limiter(key_func=get_test_id, default_limits=["6/5minutes"])
+limiter = Limiter(key_func=get_test_id, default_limits=["25/5minutes"])

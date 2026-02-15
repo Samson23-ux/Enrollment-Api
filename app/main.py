@@ -1,5 +1,6 @@
 import sentry_sdk
-from fastapi import Request, FastAPI
+from fastapi import FastAPI
+from fastapi.requests import Request
 from datetime import datetime, timezone
 import sentry_sdk.logger as sentry_logger
 from slowapi.errors import RateLimitExceeded
@@ -60,6 +61,6 @@ async def request_middleware(request: Request, call_next):
 
 
 @app.get("/api/v1/health/", status_code=200, description="Check api health")
-@limiter.limit("20/minute")
+@limiter.exempt
 async def health_check(request: Request):
     return {"message": "OK"}
